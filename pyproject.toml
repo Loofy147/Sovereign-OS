@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stratos-os"
+version = "0.1.2"
+authors = [
+  { name="Stratos Architect", email="architect@stratos.io" },
+]
+description = "Sovereign Holographic Torus OS Kernel"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/stratos-os/stratos-kernel"
+"Repository" = "https://github.com/stratos-os/stratos-kernel"
+"Documentation" = "https://github.com/stratos-os/stratos-kernel#readme"
+
+[tool.setuptools.packages.find]
+where = ["src"]
