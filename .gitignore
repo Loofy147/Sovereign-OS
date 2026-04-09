@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+.stratos_assets/
+.test_*/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+ENV/
