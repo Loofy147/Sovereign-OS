@@ -1,14 +1,15 @@
 import os
 import hashlib
 import numpy as np
+from kernel.constants import DIM, T_SAFE, SHARD_CAP, BETA
 
 class SovereignTorus:
-    def __init__(self, dim=1024, shard_cap=40, memory_dir='./.assets'):
+    def __init__(self, dim=DIM, shard_cap=SHARD_CAP, memory_dir='./.assets'):
         self.dim = dim
         self.shard_cap = shard_cap
         self.memory_dir = memory_dir
-        self.conf_thresh = 0.093750  # 3/√D
-        self.beta = 32.0             # Hopfield temperature
+        self.conf_thresh = T_SAFE
+        self.beta = BETA
 
         os.makedirs(self.memory_dir, exist_ok=True)
         self.shards = []
