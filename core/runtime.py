@@ -1,9 +1,22 @@
 import numpy as np
+import os
 
 class ChainRuntime:
     def __init__(self, torus):
         self.torus = torus
-        self.cache = {}  # In-memory fast path for verified chains (0.0002ms)
+        self.cache_path = os.path.join(self.torus.root_dir, "chain_cache.npy")
+        self.cache = self._load_cache()
+
+    def _load_cache(self):
+        if os.path.exists(self.cache_path):
+            try:
+                return np.load(self.cache_path, allow_pickle=True).item()
+            except:
+                return {}
+        return {}
+
+    def _save_cache(self):
+        np.save(self.cache_path, self.cache)
 
     def bind_frac(self, a, b, alpha=0.5):
         """
@@ -21,6 +34,7 @@ class ChainRuntime:
 
     def execute_chain(self, sequence_ids):
         """Executes a multi-hop reasoning sequence."""
+        # Use 'chain:' salt for execution path registration
         chain_label = "->".join(sequence_ids)
 
         # Check cache (Boundary Schism check)
@@ -36,7 +50,6 @@ class ChainRuntime:
             current_state = self.bind_frac(current_state, next_vec)
 
         # TERMINAL SNAP (Project final state back to known reality)
-        # In a full TGI, this would snap against a target output matrix.
-        # For OS routing, we register the high-fidelity phase vector.
         self.cache[chain_label] = current_state
+        self._save_cache()
         return current_state

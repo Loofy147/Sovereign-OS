@@ -7,7 +7,12 @@ class SovereignTorus:
         self.dim = dim
         self.shard_cap = shard_cap
         self.root_dir = root_dir
-        self.t_safe = 0.09375  # The absolute 3/√D physical boundary
+
+        # Locked Physical Constants (STRATOS-OS v7/v8)
+        self.t_safe = 0.09375            # The absolute 3/√D physical boundary
+        self.adjoint_ceiling = 0.71      # Inherent χ² loss of circular convolution
+        self.spectral_learning_rate = 0.147 # Prevents divergence at η=1.0
+
         self.shards = []
 
         os.makedirs(self.root_dir, exist_ok=True)
