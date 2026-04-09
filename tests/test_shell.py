@@ -2,10 +2,10 @@ import pytest
 import os
 import shutil
 import sys
-import types
 import tempfile
 from stratos_os.shell.deference import boot_stratos
 from stratos_os.shell.saturator import IndustrialSaturator
+
 
 @pytest.fixture
 def env():
@@ -31,6 +31,7 @@ def env():
     for m in to_del:
         del sys.modules[m]
 
+
 def test_saturator_and_loader(env):
     torus, loader = env
     saturator = IndustrialSaturator(torus)
@@ -42,6 +43,7 @@ def test_saturator_and_loader(env):
 
     import stratos.test.hello as hello_module
     assert hello_module.my_func() == "hello from manifold"
+
 
 def test_saturator_ingest_module(env):
     torus, loader = env
@@ -78,3 +80,9 @@ def _private():
                 sys.path.remove(tmpdir)
             if "dummy_mod" in sys.modules:
                 del sys.modules["dummy_mod"]
+
+
+if __name__ == "__main__":
+    # If this test file is run directly, it will boot the torus and run the loader test
+    # (Optional, but useful for quick verification)
+    t = boot_stratos()

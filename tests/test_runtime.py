@@ -5,6 +5,7 @@ import shutil
 from stratos_os.core.manifold import SovereignTorus
 from stratos_os.core.runtime import ChainRuntime
 
+
 @pytest.fixture
 def runtime():
     root = "./.test_runtime_assets"
@@ -16,6 +17,7 @@ def runtime():
     if os.path.exists(root):
         shutil.rmtree(root)
 
+
 def test_bind_frac(runtime):
     a = runtime.torus._generate_vec("a")
     b = runtime.torus._generate_vec("b")
@@ -24,6 +26,7 @@ def test_bind_frac(runtime):
     assert c.shape == (1024,)
     assert not np.allclose(c, a)
     assert not np.allclose(c, b)
+
 
 def test_execute_chain(runtime):
     # Note: execute_chain uses torus._generate_vec to initialize and evolve state

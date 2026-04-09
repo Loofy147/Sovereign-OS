@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def test_workflow_syntax():
     workflow_path = ".github/workflows/python-package.yml"
     assert os.path.exists(workflow_path)
@@ -10,6 +11,7 @@ def test_workflow_syntax():
         assert "name:" in content
         assert "on:" in content
         assert "jobs:" in content
+
 
 def test_population_script_execution():
     # Verify the script runs without error
@@ -21,6 +23,7 @@ def test_population_script_execution():
     )
     assert result.returncode == 0
     assert "[POPULATE] Manifold population complete." in result.stdout
+
 
 def test_docs_existence():
     assert os.path.exists("docs/infrastructure/setup.md")

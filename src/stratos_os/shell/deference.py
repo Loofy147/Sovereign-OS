@@ -5,6 +5,7 @@ import importlib.abc
 import importlib.machinery
 import os
 
+
 class SovereignLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def __init__(self, torus):
         self.torus = torus
@@ -17,7 +18,7 @@ class SovereignLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def create_module(self, spec):
         module = types.ModuleType(spec.name)
         if spec.name == 'stratos' or spec.name.endswith('.'):
-             module.__path__ = []
+            module.__path__ = []
         return module
 
     def exec_module(self, module):
@@ -39,10 +40,11 @@ class SovereignLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
                     source_code = f.read().decode('utf-8')
                 exec(source_code, module.__dict__)
             except FileNotFoundError:
-                raise ImportError(f"CRITICAL: Trace found but binary logic blob missing for {logic_id}")
+                msg = f"CRITICAL: Trace found but binary logic blob missing for {logic_id} at {blob_path}"
+                raise ImportError(msg)
         else:
             module.__path__ = []
-            pass
+
 
 def boot_stratos():
     from stratos_os.core.manifold import SovereignTorus
