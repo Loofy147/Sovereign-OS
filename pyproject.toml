@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stratos-os"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
   { name="Stratos Architect", email="architect@stratos.io" },
 ]
@@ -19,6 +19,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/stratos-os/stratos-kernel"
+"Repository" = "https://github.com/stratos-os/stratos-kernel"
+"Documentation" = "https://github.com/stratos-os/stratos-kernel#readme"
 
 [tool.setuptools.packages.find]
 where = ["src"]
