@@ -3,7 +3,7 @@ import hashlib
 import numpy as np
 
 class SovereignTorus:
-    def __init__(self, dim=1024, shard_cap=40, memory_dir='./SOVEREIGN_ASSETS'):
+    def __init__(self, dim=1024, shard_cap=40, memory_dir='./.assets'):
         self.dim = dim
         self.shard_cap = shard_cap
         self.memory_dir = memory_dir

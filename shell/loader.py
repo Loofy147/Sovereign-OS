@@ -37,7 +37,7 @@ class SovereignLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
             pass
 
 def initialize():
-    from kernel import SovereignTorus
+    from kernel.torus import SovereignTorus
     torus = SovereignTorus()
     sys.meta_path.insert(0, SovereignLoader(torus))
     return torus
