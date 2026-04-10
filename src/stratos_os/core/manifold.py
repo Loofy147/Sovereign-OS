@@ -29,12 +29,18 @@ class SovereignTorus:
         return vec / np.linalg.norm(vec)
 
     def bind(self, a, b):
-        """Standard circular convolution for storage (preserves amplitude contrast)."""
-        return np.fft.ifft(np.fft.fft(a) * np.fft.fft(b)).real.astype(np.float32)
+        """
+        Standard circular convolution for storage (preserves amplitude contrast).
+        Optimized with RFFT for real-valued vectors.
+        """
+        return np.fft.irfft(np.fft.rfft(a) * np.fft.rfft(b), n=len(a)).real.astype(np.float32)
 
     def unbind(self, c, a):
-        """Standard circular correlation for trace isolation."""
-        return np.fft.ifft(np.fft.fft(c) * np.conj(np.fft.fft(a))).real.astype(np.float32)
+        """
+        Standard circular correlation for trace isolation.
+        Optimized with RFFT for real-valued vectors.
+        """
+        return np.fft.irfft(np.fft.rfft(c) * np.conj(np.fft.rfft(a)), n=len(c)).real.astype(np.float32)
 
     def _sync_shards(self):
         files = sorted([f for f in os.listdir(self.root_dir) if f.startswith('k_mat_')])
