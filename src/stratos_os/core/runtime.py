@@ -1,6 +1,7 @@
 import numpy as np
 import os
 
+
 class ChainRuntime:
     def __init__(self, torus):
         self.torus = torus
@@ -11,7 +12,7 @@ class ChainRuntime:
         if os.path.exists(self.cache_path):
             try:
                 return np.load(self.cache_path, allow_pickle=True).item()
-            except:
+            except Exception:
                 return {}
         return {}
 

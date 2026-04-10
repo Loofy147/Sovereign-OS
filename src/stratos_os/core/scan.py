@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def scan_manifold_integrity(torus):
     """
     Manifold Integrity Scan: Verifies that the Torus hasn't exceeded its geometric capacity.

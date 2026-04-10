@@ -2,6 +2,7 @@ import inspect
 import importlib
 import textwrap
 
+
 class IndustrialSaturator:
     def __init__(self, torus):
         self.torus = torus
@@ -12,7 +13,8 @@ class IndustrialSaturator:
         functions = inspect.getmembers(module, inspect.isfunction)
 
         for name, func in functions:
-            if name.startswith('_'): continue
+            if name.startswith('_'):
+                continue
 
             try:
                 source = textwrap.dedent(inspect.getsource(func))
@@ -24,6 +26,9 @@ class IndustrialSaturator:
 
     def ingest_function(self, identity, func):
         """Directly anchors a function object."""
-        source = textwrap.dedent(inspect.getsource(func))
-        self.torus.ingest(identity, source)
-        print(f"[SATURATOR] Anchored: {identity}")
+        try:
+            source = textwrap.dedent(inspect.getsource(func))
+            self.torus.ingest(identity, source)
+            print(f"[SATURATOR] Anchored: {identity}")
+        except Exception as e:
+            print(f"[SATURATOR] Failed to anchor {identity}: {e}")

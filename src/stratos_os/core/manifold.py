@@ -2,16 +2,17 @@ import numpy as np
 import hashlib
 import os
 
+
 class SovereignTorus:
     def __init__(self, dim=1024, shard_cap=40, root_dir='./.stratos_assets'):
         self.dim = dim
         self.shard_cap = shard_cap
-        self.root_dir = root_dir
+        self.root_dir = os.path.abspath(root_dir)
 
         # Locked Physical Constants (STRATOS-OS v7/v8)
         self.t_safe = 0.09375            # The absolute 3/√D physical boundary
         self.adjoint_ceiling = 0.71      # Inherent χ² loss of circular convolution
-        self.spectral_learning_rate = 0.147 # Prevents divergence at η=1.0
+        self.spectral_learning_rate = 0.147  # Prevents divergence at η=1.0
 
         self.shards = []
 
@@ -73,7 +74,8 @@ class SovereignTorus:
         best_sim, target_v = -1.0, None
 
         for shard in self.shards:
-            if shard['K'].shape[0] == 0: continue
+            if shard['K'].shape[0] == 0:
+                continue
 
             # O(N) Matrix multiplication for exact nearest-neighbor
             sims = shard['K'] @ q_vec
