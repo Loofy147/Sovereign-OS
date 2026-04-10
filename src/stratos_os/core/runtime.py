@@ -41,7 +41,7 @@ class ChainRuntime:
 
         return np.fft.irfft(res, n=len(a)).astype(np.float32)
 
-    def execute_chain(self, sequence_ids):
+    def execute_chain(self, sequence_ids, persist=True):
         """Executes a multi-hop reasoning sequence."""
         # Use 'chain:' salt for execution path registration
         chain_label = "->".join(sequence_ids)
@@ -60,5 +60,6 @@ class ChainRuntime:
 
         # TERMINAL SNAP (Project final state back to known reality)
         self.cache[chain_label] = current_state
-        self._save_cache()
+        if persist:
+            self._save_cache()
         return current_state
