@@ -15,6 +15,8 @@ class SovereignTorus:
         self.spectral_learning_rate = 0.147  # Prevents divergence at η=1.0
 
         self.shards = []
+        self._fused_K = np.zeros((0, self.dim), dtype=np.float32)
+        self._fused_V = np.zeros((0, self.dim), dtype=np.float32)
 
         os.makedirs(self.root_dir, exist_ok=True)
         self._sync_shards()
@@ -29,20 +31,38 @@ class SovereignTorus:
         return vec / np.linalg.norm(vec)
 
     def bind(self, a, b):
-        """Standard circular convolution for storage (preserves amplitude contrast)."""
-        return np.fft.ifft(np.fft.fft(a) * np.fft.fft(b)).real.astype(np.float32)
+        """
+        Standard circular convolution for storage (preserves amplitude contrast).
+        Optimized with RFFT for real-valued vectors.
+        """
+        return np.fft.irfft(np.fft.rfft(a) * np.fft.rfft(b), n=len(a)).real.astype(np.float32)
 
     def unbind(self, c, a):
-        """Standard circular correlation for trace isolation."""
-        return np.fft.ifft(np.fft.fft(c) * np.conj(np.fft.fft(a))).real.astype(np.float32)
+        """
+        Standard circular correlation for trace isolation.
+        Optimized with RFFT for real-valued vectors.
+        """
+        return np.fft.irfft(np.fft.rfft(c) * np.conj(np.fft.rfft(a)), n=len(c)).real.astype(np.float32)
 
     def _sync_shards(self):
         files = sorted([f for f in os.listdir(self.root_dir) if f.startswith('k_mat_')])
+        self.shards = []
+        all_k = []
+        all_v = []
         for f in files:
             idx = f.split('_')[-1].split('.')[0]
             k = np.load(os.path.join(self.root_dir, f"k_mat_{idx}.npy"))
             v = np.load(os.path.join(self.root_dir, f"v_mat_{idx}.npy"))
             self.shards.append({'K': k, 'V': v})
+            all_k.append(k)
+            all_v.append(v)
+
+        if all_k:
+            self._fused_K = np.vstack(all_k)
+            self._fused_V = np.vstack(all_v)
+        else:
+            self._fused_K = np.zeros((0, self.dim), dtype=np.float32)
+            self._fused_V = np.zeros((0, self.dim), dtype=np.float32)
 
     def ingest(self, identity, payload_bytes):
         """Auto-associative Two-Matrix storage. No online normalization."""
@@ -58,6 +78,10 @@ class SovereignTorus:
         current['K'] = np.vstack([current['K'], v_id])
         current['V'] = np.vstack([current['V'], v_val])
 
+        # Update fused matrices for fast retrieval
+        self._fused_K = np.vstack([self._fused_K, v_id])
+        self._fused_V = np.vstack([self._fused_V, v_val])
+
         # Persist manifold state
         idx = len(self.shards) - 1
         np.save(os.path.join(self.root_dir, f"k_mat_{idx}.npy"), current['K'])
@@ -70,20 +94,16 @@ class SovereignTorus:
 
     def retrieve(self, identity):
         """K-space nearest-neighbor scan. Works up to σ=0.20 noise."""
+        if self._fused_K.shape[0] == 0:
+            return None, -1.0
+
         q_vec = self._generate_vec(identity, salt="base:")
-        best_sim, target_v = -1.0, None
 
-        for shard in self.shards:
-            if shard['K'].shape[0] == 0:
-                continue
-
-            # O(N) Matrix multiplication for exact nearest-neighbor
-            sims = shard['K'] @ q_vec
-            idx = np.argmax(sims)
-
-            if sims[idx] > best_sim:
-                best_sim = sims[idx]
-                target_v = shard['V'][idx]
+        # O(N) Fused Matrix multiplication for exact nearest-neighbor
+        sims = self._fused_K @ q_vec
+        idx = np.argmax(sims)
+        best_sim = sims[idx]
+        target_v = self._fused_V[idx]
 
         # The T_safe Confidence Gate
         if best_sim >= self.t_safe:

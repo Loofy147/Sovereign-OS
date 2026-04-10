@@ -23,17 +23,25 @@ class ChainRuntime:
         """
         Fractional Binding: Modulates amplitudes to preserve phase structure.
         Holds round-trip fidelity at flat ~0.886 regardless of sequence depth.
+        Optimized with RFFT and direct complex arithmetic for alpha=0.5.
         """
-        fa = np.fft.fft(a)
-        fb = np.fft.fft(b)
+        fa = np.fft.rfft(a)
+        fb = np.fft.rfft(b)
 
-        # Split amplitude budget, commute phases
-        amp = (np.abs(fa) * np.abs(fb)) ** alpha
-        phase = np.exp(1j * (np.angle(fa) + np.angle(fb)))
+        if alpha == 0.5:
+            # Optimized path for standard alpha=0.5
+            # (fa*fb) / sqrt(|fa*fb|) is equivalent to sqrt(|fa|*|fb|) * exp(i*(angle(fa)+angle(fb)))
+            f_prod = fa * fb
+            res = f_prod / (np.sqrt(np.abs(f_prod)) + 1e-12)
+        else:
+            # General case
+            amp = (np.abs(fa) * np.abs(fb)) ** alpha
+            phase = np.exp(1j * (np.angle(fa) + np.angle(fb)))
+            res = amp * phase
 
-        return np.fft.ifft(amp * phase).real.astype(np.float32)
+        return np.fft.irfft(res, n=len(a)).astype(np.float32)
 
-    def execute_chain(self, sequence_ids):
+    def execute_chain(self, sequence_ids, persist=True):
         """Executes a multi-hop reasoning sequence."""
         # Use 'chain:' salt for execution path registration
         chain_label = "->".join(sequence_ids)
@@ -52,5 +60,6 @@ class ChainRuntime:
 
         # TERMINAL SNAP (Project final state back to known reality)
         self.cache[chain_label] = current_state
-        self._save_cache()
+        if persist:
+            self._save_cache()
         return current_state
