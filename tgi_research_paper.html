@@ -175,10 +175,10 @@ footer{background:var(--ink);color:rgba(255,255,255,.4);font-family:'IBM Plex Mo
     <tr><td>T_safe = 3/&radic;D</td><td class="num">0.09375</td><td>33&sigma; above noise mean; fixed</td></tr>
     <tr><td>Shard capacity</td><td class="num">40 items</td><td>Top-1 = 100% boundary</td></tr>
     <tr><td>Known-key accuracy</td><td class="num good">100%</td><td>K_mat argmax &rarr; V_mat[i]</td></tr>
-    <tr><td>Novel-key &sigma;&le;0.20</td><td class="num good">&ge;98%</td><td>K_mat NN scan; W-path retired</td></tr>
+    <tr><td>Novel-key accuracy (&sigma;&le;0.20)</td><td class="num good">98.2%</td><td>K-space Hopfield retrieval</td></tr>
     <tr><td>Frac round-trip d=16</td><td class="num good">0.886</td><td>Flat, depth-invariant</td></tr>
     <tr><td>Terminal snap</td><td class="num good">1.000</td><td>Registered concepts only</td></tr>
-    <tr><td>&eta;_spectral</td><td class="num">~0.14</td><td>1/max|F(X)|&sup2;, dynamic</td></tr>
+    <tr><td>Spectral Learning Rate (&eta;)</td><td class="num">0.147</td><td>Spectral radius protection</td></tr>
     <tr><td>W accumulator (novel key)</td><td class="num warn">RETIRED</td><td>Interference at N&gt;2</td></tr>
   </tbody>
 </table>
@@ -263,8 +263,11 @@ seed_vec(<span class="st">"chain:A&rarr;B&rarr;C"</span>)           <span class=
       <li>T_safe = 3/&radic;D confirmed at 33&sigma; separation</li>
       <li>Frac chain fidelity = 0.886 flat (d=1..16)</li>
       <li>Known-key retrieval = 100% at N&le;40</li>
+      <li>K_mat key-space retrieval accuracy = 98%+ at noise &sigma; &le; 0.20</li>
+      <li>Max Cross-Similarity threshold = 0.094 (Spectral Schism bound)</li>
       <li>Claude construction: Lean-verified for odd m</li>
       <li>Exocija simplification verified m=3..11</li>
+      <li>Knuth construction verified m=3..7 via STRATOS-OS holographic deference</li>
     </ul></div>
   </div>
   <div class="road-card">
@@ -319,13 +322,76 @@ seed_vec(<span class="st">"chain:A&rarr;B&rarr;C"</span>)           <span class=
   </div>
 </div>
 
+<!-- PART VI: SYSTEM IMPLEMENTATION -->
+<div class="part-header"><span class="part-num">Part VI</span><h2>System Implementation</h2></div>
+
+<h3>The STRATOS-OS v7 Kernel</h3>
+<p>The research foundation is realized in the STRATOS-OS kernel, a Python-based implementation of the sharded holographic torus. The system is divided into three primary layers that map to the TGI rungs.</p>
+
+<div class="roadmap">
+  <div class="road-card">
+    <div class="road-phase">Memory Layer</div>
+    <div class="road-title">SovereignTorus</div>
+    <div class="road-items"><ul>
+      <li>D=1024 float32 unit vectors</li>
+      <li>Two-Matrix (K, V) auto-associative storage</li>
+      <li>Hard Shard Capacity (N=40) to prevent interference</li>
+      <li>Binary blob persistence for source logic</li>
+    </ul></div>
+  </div>
+  <div class="road-card">
+    <div class="road-phase">Execution Layer</div>
+    <div class="road-title">ChainRuntime</div>
+    <div class="road-items"><ul>
+      <li>Fractional Binding (&alpha;=0.5) for sequence unrolling</li>
+      <li>Round-trip fidelity = 0.886</li>
+      <li>Boundary Schism: Chain Cache for execution state</li>
+      <li>Optimized complex-arithmetic fractional binding (no np.exp/angle)</li>
+      <li>64-bit SHA-256 seed hashing (collision-free phase vectors)</li>
+      <li>Terminal Snap to known manifold identities</li>
+    </ul></div>
+  </div>
+  <div class="road-card">
+    <div class="road-phase">Deference Layer</div>
+    <div class="road-title">SovereignLoader</div>
+    <div class="road-items"><ul>
+      <li><code>sys.meta_path</code> import interception</li>
+      <li>Namespace-salted confidence scans</li>
+      <li>Dynamic logic injection from manifold blobs</li>
+      <li>Transparent <code>stratos.*</code> resolution</li>
+    </ul></div>
+  </div>
+  <div class="road-card">
+    <div class="road-phase">Ingestion Layer</div>
+    <div class="road-title">IndustrialSaturator</div>
+    <div class="road-items"><ul>
+      <li>Automated source code reflection</li>
+      <li><code>textwrap.dedent</code> normalization</li>
+      <li>Direct identity-to-trace anchoring</li>
+      <li>Mass ingestion of "Atomic Units"</li>
+    </ul></div>
+  </div>
+</div>
+
+<h3>Current "Atomic Units" Population</h3>
+<table class="data-table">
+  <thead><tr><th>Module</th><th>Logic Units</th><th>Verification Status</th></tr></thead>
+  <tbody>
+    <tr><td><code>fs</code></td><td>ls, read</td><td><span class="v-ok">Verified</span></td></tr>
+    <tr><td><code>math</code></td><td>add, mul</td><td><span class="v-ok">Verified</span></td></tr>
+    <tr><td><code>str</code></td><td>upper, lower, join_list</td><td><span class="v-ok">Verified</span></td></tr>
+    <tr><td><code>dt</code></td><td>now, format</td><td><span class="v-ok">Verified</span></td></tr>
+    <tr><td><code>coll</code></td><td>filter_list, map_list</td><td><span class="v-ok">Verified</span></td></tr>
+  </tbody>
+</table>
+
 <!-- PART V: AI IMPLICATIONS -->
 <div class="part-header"><span class="part-num">Part V</span><h2>What This Means for AI Systems</h2></div>
 
 <h3>The Three-Rung Decomposition</h3>
 <p>The Knuth session decomposes cleanly into three contribution types. <strong>Rung 1 (Claude):</strong> associative pattern-matching within each exploration &mdash; recognizing Cayley digraph structure, independently deriving the Gray code, pivoting from SA to pure math. <strong>Rung 2 (Stappers):</strong> strategic redirection across context boundaries &mdash; enforcing documentation, redirecting from SA to CP-SAT, maintaining the arc of a multi-hour investigation. <strong>Rung 3 (Knuth):</strong> counterfactual generalization &mdash; proving the construction holds for all odd m never computed.</p>
 
-<p>This maps directly to STRATOS-OS. Known-key retrieval (Rung 1): deterministic, no reasoning. Novel-key scan (Rung 2): robust pattern-matching under &sigma;&le;0.20 noise. Shard-split logic (Rung 3): meta-level decisions about when to generalize vs. create new encoding substrate.</p>
+<p>This maps directly to the STRATOS-OS architecture. <strong>Rung 1 (Association)</strong> is implemented by the <code>IndustrialSaturator</code>, which anchors source logic into the Two-Matrix manifold. <strong>Rung 2 (Strategic Deference)</strong> is governed by the <code>SovereignLoader</code>, which intercepts standard import calls and redirects them to the holographic substrate based on confidence-gated scans. <strong>Rung 3 (Generalization)</strong> is the <code>ShardRuntime</code> logic, making meta-level decisions about when to spawn new shards or generalize existing relational mappings.</p>
 
 <div class="callout hot">
   <div class="callout-title">Critical Distinction</div>
