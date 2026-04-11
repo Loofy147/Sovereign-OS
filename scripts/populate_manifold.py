@@ -67,6 +67,88 @@ def _coll_helpers(saturator):
     saturator.ingest_function("coll.map_list", map_list)
 
 
+def _json_units(saturator):
+    def loads(json_str):
+        import json
+        return json.loads(json_str)
+
+    def dumps(obj):
+        import json
+        return json.dumps(obj)
+
+    saturator.ingest_function("json.loads", loads)
+    saturator.ingest_function("json.dumps", dumps)
+
+
+def _net_units(saturator):
+    def get(url):
+        import urllib.request
+        with urllib.request.urlopen(url) as response:
+            return response.read().decode('utf-8')
+
+    def post(url, data_dict):
+        import urllib.request
+        import urllib.parse
+        import json
+        data = json.dumps(data_dict).encode('utf-8')
+        req = urllib.request.Request(url, data=data, method='POST')
+        req.add_header('Content-Type', 'application/json')
+        with urllib.request.urlopen(req) as response:
+            return response.read().decode('utf-8')
+
+    saturator.ingest_function("net.get", get)
+    saturator.ingest_function("net.post", post)
+
+
+def _sys_units(saturator):
+    def get_platform():
+        import sys
+        return sys.platform
+
+    def get_version():
+        import sys
+        return sys.version
+
+    def get_env(key, default=None):
+        import os
+        return os.environ.get(key, default)
+
+    saturator.ingest_function("sys.get_platform", get_platform)
+    saturator.ingest_function("sys.get_version", get_version)
+    saturator.ingest_function("sys.get_env", get_env)
+
+
+def _crypto_units(saturator):
+    def sha256(text):
+        import hashlib
+        return hashlib.sha256(text.encode()).hexdigest()
+
+    def b64encode(text):
+        import base64
+        return base64.b64encode(text.encode()).decode()
+
+    def b64decode(encoded):
+        import base64
+        return base64.b64decode(encoded.encode()).decode()
+
+    saturator.ingest_function("crypto.sha256", sha256)
+    saturator.ingest_function("crypto.b64encode", b64encode)
+    saturator.ingest_function("crypto.b64decode", b64decode)
+
+
+def _util_units(saturator):
+    def regex_match(pattern, text):
+        import re
+        return bool(re.match(pattern, text))
+
+    def get_temp_dir():
+        import tempfile
+        return tempfile.gettempdir()
+
+    saturator.ingest_function("utils.regex_match", regex_match)
+    saturator.ingest_function("utils.get_temp_dir", get_temp_dir)
+
+
 def populate():
     # Clean population
     asset_dir = './.stratos_assets'
@@ -82,6 +164,11 @@ def populate():
     _string_utils(saturator)
     _dt_utils(saturator)
     _coll_helpers(saturator)
+    _json_units(saturator)
+    _net_units(saturator)
+    _sys_units(saturator)
+    _crypto_units(saturator)
+    _util_units(saturator)
 
     print("[POPULATE] Manifold population complete.")
 

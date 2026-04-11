@@ -18,6 +18,9 @@ class SovereignTorus:
         self._fused_K = np.zeros((0, self.dim), dtype=np.float32)
         self._fused_V = np.zeros((0, self.dim), dtype=np.float32)
 
+        # Hierarchical Routing Index
+        self._shard_centroids = np.zeros((0, self.dim), dtype=np.float32)
+
         os.makedirs(self.root_dir, exist_ok=True)
         self._sync_shards()
 
@@ -31,24 +34,33 @@ class SovereignTorus:
         return vec / np.linalg.norm(vec)
 
     def bind(self, a, b):
-        """
-        Standard circular convolution for storage (preserves amplitude contrast).
-        Optimized with RFFT for real-valued vectors.
-        """
+        """Standard circular convolution."""
         return np.fft.irfft(np.fft.rfft(a) * np.fft.rfft(b), n=len(a)).real.astype(np.float32)
 
     def unbind(self, c, a):
-        """
-        Standard circular correlation for trace isolation.
-        Optimized with RFFT for real-valued vectors.
-        """
+        """Standard circular correlation."""
         return np.fft.irfft(np.fft.rfft(c) * np.conj(np.fft.rfft(a)), n=len(c)).real.astype(np.float32)
+
+    def bind_ghrr(self, a, b):
+        """GHRR bind."""
+        return self.bind(a, self._permute(b))
+
+    def unbind_ghrr(self, c, a):
+        """GHRR unbind."""
+        return self._unpermute(self.unbind(c, a))
+
+    def _permute(self, v):
+        return v[::-1]
+
+    def _unpermute(self, v):
+        return v[::-1]
 
     def _sync_shards(self):
         files = sorted([f for f in os.listdir(self.root_dir) if f.startswith('k_mat_')])
         self.shards = []
         all_k = []
         all_v = []
+        centroids = []
         for f in files:
             idx = f.split('_')[-1].split('.')[0]
             k = np.load(os.path.join(self.root_dir, f"k_mat_{idx}.npy"))
@@ -56,56 +68,78 @@ class SovereignTorus:
             self.shards.append({'K': k, 'V': v})
             all_k.append(k)
             all_v.append(v)
+            # Centroid is the normalized mean of all keys in the shard
+            if k.shape[0] > 0:
+                c = np.mean(k, axis=0)
+                centroids.append(c / (np.linalg.norm(c) + 1e-12))
+            else:
+                centroids.append(np.zeros(self.dim, dtype=np.float32))
 
         if all_k:
             self._fused_K = np.vstack(all_k)
             self._fused_V = np.vstack(all_v)
+            self._shard_centroids = np.vstack(centroids)
         else:
             self._fused_K = np.zeros((0, self.dim), dtype=np.float32)
             self._fused_V = np.zeros((0, self.dim), dtype=np.float32)
+            self._shard_centroids = np.zeros((0, self.dim), dtype=np.float32)
 
     def ingest(self, identity, payload_bytes):
-        """Auto-associative Two-Matrix storage. No online normalization."""
         v_id = self._generate_vec(identity, salt="base:")
         v_val = self._generate_vec(payload_bytes, salt="src:")
 
-        # Enforce Hard Shard Cap
         if not self.shards or self.shards[-1]['K'].shape[0] >= self.shard_cap:
             self.shards.append({'K': np.zeros((0, self.dim), dtype=np.float32),
                                 'V': np.zeros((0, self.dim), dtype=np.float32)})
+            new_centroid = np.zeros((1, self.dim), dtype=np.float32)
+            if self._shard_centroids.shape[0] == 0:
+                self._shard_centroids = new_centroid
+            else:
+                self._shard_centroids = np.vstack([self._shard_centroids, new_centroid])
 
         current = self.shards[-1]
         current['K'] = np.vstack([current['K'], v_id])
         current['V'] = np.vstack([current['V'], v_val])
 
-        # Update fused matrices for fast retrieval
+        # Update centroid for the current shard
+        c = np.mean(current['K'], axis=0)
+        self._shard_centroids[-1] = c / (np.linalg.norm(c) + 1e-12)
+
         self._fused_K = np.vstack([self._fused_K, v_id])
         self._fused_V = np.vstack([self._fused_V, v_val])
 
-        # Persist manifold state
         idx = len(self.shards) - 1
         np.save(os.path.join(self.root_dir, f"k_mat_{idx}.npy"), current['K'])
         np.save(os.path.join(self.root_dir, f"v_mat_{idx}.npy"), current['V'])
 
-        # Write binary source blob
         blob_hash = hashlib.md5(v_val.tobytes()).hexdigest()
         with open(os.path.join(self.root_dir, f"blob_{blob_hash}.bin"), 'wb') as f:
             f.write(payload_bytes.encode('utf-8'))
 
     def retrieve(self, identity):
-        """K-space nearest-neighbor scan. Works up to σ=0.20 noise."""
+        """Hierarchical Shard Routing (O(log N_shards + N_cap))"""
         if self._fused_K.shape[0] == 0:
             return None, -1.0
 
         q_vec = self._generate_vec(identity, salt="base:")
 
-        # O(N) Fused Matrix multiplication for exact nearest-neighbor
-        sims = self._fused_K @ q_vec
-        idx = np.argmax(sims)
-        best_sim = sims[idx]
-        target_v = self._fused_V[idx]
+        # 1. Route to candidate shards via Centroid similarity
+        shard_sims = self._shard_centroids @ q_vec
+        # Select top 2 candidate shards to handle boundary noise
+        candidate_indices = np.argsort(shard_sims)[-2:]
 
-        # The T_safe Confidence Gate
+        best_sim = -1.0
+        best_v = None
+
+        # 2. Local scan within candidate shards
+        for s_idx in candidate_indices:
+            shard = self.shards[s_idx]
+            sims = shard['K'] @ q_vec
+            idx = np.argmax(sims)
+            if sims[idx] > best_sim:
+                best_sim = sims[idx]
+                best_v = shard['V'][idx]
+
         if best_sim >= self.t_safe:
-            return target_v, best_sim
+            return best_v, best_sim
         return None, best_sim

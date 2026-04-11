@@ -1,0 +1,13 @@
+<<<<<<< SEARCH
+        if v_val is not None:
+            self._inject_logic(module, logic_id, v_val)
+        else:
+        # Mark as package to allow sub-module imports
+        module.__path__ = []
+=======
+        if v_val is not None:
+            self._inject_logic(module, logic_id, v_val)
+        else:
+            # Mark as package to allow sub-module imports
+            module.__path__ = []
+>>>>>>> REPLACE
