@@ -29,21 +29,26 @@ class SovereignLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
         if logic_id.startswith('.'):
             logic_id = logic_id[1:]
 
+        # Attempt to retrieve direct logic (e.g., stratos.json.loads)
         v_val, confidence = self.torus.retrieve(logic_id)
 
         if v_val is not None:
-            blob_hash = hashlib.md5(v_val.tobytes()).hexdigest()
-            blob_path = os.path.join(self.torus.root_dir, f"blob_{blob_hash}.bin")
-
-            try:
-                with open(blob_path, 'rb') as f:
-                    source_code = f.read().decode('utf-8')
-                exec(source_code, module.__dict__)
-            except FileNotFoundError:
-                msg = f"CRITICAL: Trace found but binary logic blob missing for {logic_id} at {blob_path}"
-                raise ImportError(msg)
+            self._inject_logic(module, logic_id, v_val)
         else:
+            # Mark as package to allow sub-module imports
             module.__path__ = []
+
+    def _inject_logic(self, module, logic_id, v_val):
+        blob_hash = hashlib.md5(v_val.tobytes()).hexdigest()
+        blob_path = os.path.join(self.torus.root_dir, f"blob_{blob_hash}.bin")
+
+        try:
+            with open(blob_path, 'rb') as f:
+                source_code = f.read().decode('utf-8')
+            exec(source_code, module.__dict__)
+        except FileNotFoundError:
+            msg = f"CRITICAL: Trace found but binary logic blob missing for {logic_id} at {blob_path}"
+            raise ImportError(msg)
 
 
 def boot_stratos():
